@@ -13,7 +13,7 @@ router.route('/')
     console.log("--", req.body);
     var contact = req.body.contact;
     console.log("contact", contact);
-    res.send({data:"Connected"});
+    res.send("Connected");
 })
 
 module.exports = router;
