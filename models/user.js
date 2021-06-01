@@ -5,9 +5,11 @@ var bcrypt = require('bcrypt');
 
 var userSchema = new Schema({
     name: String,
-    phone: String,
+    contact: String,
     otp: String,
+    done: Boolean,
 });
 
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+module.exports = User;

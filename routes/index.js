@@ -1,5 +1,5 @@
 const express = require('express');
-// const actions = require('../methods/actions');
+const actions = require('../methods/actions');
 const router = express.Router();
 
 router.route('/')
@@ -9,6 +9,9 @@ router.route('/')
 
 router.route('/dashboard', (req, res) => {
     res.send("Dashboard");
-})
+});
+
+router.route('/getinfo')
+.get(actions.getinfo);
 
 module.exports = router;
