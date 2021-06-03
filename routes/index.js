@@ -11,7 +11,4 @@ router.route('/dashboard', (req, res) => {
     res.send("Dashboard");
 });
 
-router.route('/getinfo')
-.get(actions.getinfo);
-
 module.exports = router;

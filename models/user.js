@@ -7,7 +7,7 @@ var userSchema = new Schema({
     name: String,
     contact: String,
     otp: String,
-    done: Boolean,
+    registered: Boolean,
 });
 
 

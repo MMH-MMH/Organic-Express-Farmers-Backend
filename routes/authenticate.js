@@ -10,58 +10,6 @@ const jwt = require('jwt-simple');
 const config = require('../config/dbConfig')
 
 router.route('/')
-// .get(async (req, res) => {
-//     // console.log("--", req.body);
-//     // var contact = req.body.contact;
-//     // console.log("contact", contact);
-//     // try{
-//     //     await client.messages.create({
-//     //         to: '+917408159898',
-//     //         body: "sms from Organic Express",
-//     //         from: from
-//     //     }).then(message => console.log("after", message.sid)).done();
-//     // } catch(err){
-//     //     console.log("otp - error", err);
-//     // }
-//     console.log("authenticate get --", req.body);
-//     var contact = "+917408159898";
-//     // console.log("contact", contact);
-
-//     /*
-
-//     var user = await User.findOne({'contact': contact});
-
-//     if(!user){
-//         var newUser = new User;
-//         newUser.contact = contact;
-//         newUser.name = "abcd";
-//         await newUser.save();
-//     }
-
-//     var otp_number = random_otp();
-
-//     await User.updateOne({ 'contact': contact }, {$set: {"otp": otp_number}});
-
-//     var txt = "SMS from Organic Express.\nYour otp is: ";
-//     txt+=(otp_number).toString();
-//     txt+="\n";
-
-//     await client.messages.create({
-//         to: contact,
-//         body: txt,
-//         from: otp.from
-//     }).then((message) => {
-//         if(message.errorMessage){
-//             res.send({success: false, msg: 'Otp sending Failed'});    
-//             return;
-//         }
-//         // console.log("after", message);
-//         res.send({success: true, msg: 'Otp sent successfully'});
-//     }).done();
-
-//     */
-   
-// })
 .post(async (req, res) => {
 
     var index = 0;
@@ -69,16 +17,24 @@ router.route('/')
     console.log("Auth post");
     console.log("--", req.body);
     var contact = req.body.contact;
-    // console.log("contact", contact);
-    contact = ("+91"+contact).toString();
 
+    if(contact.length!==10){
+        res.send({success: false, msg: 'Incorrect phone number!'});
+        return;
+    }
+
+    var pcontact = contact;
+
+    contact = ("+91"+contact).toString();
+    
+    console.log("post contact -- ", contact);
     var user = await User.findOne({'contact': contact});
 
     if(!user){
         var newUser = new User;
         newUser.contact = contact;
         newUser.name = "abcd";
-        newUser.done = false,
+        newUser.registered = false,
         await newUser.save();
         index = 1;
     } else {
@@ -103,20 +59,74 @@ router.route('/')
         from: otp.from
     }).then((message) => {
         if(message.errorMessage){
-            res.send({success: false, msg: 'Otp sending Failed'});    
+            res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
             return;
         }
-        // console.log("after", message);
+        console.log("after", message);
         var token = jwt.encode(user, config.secret);
-        res.send({success: true, msg: 'Otp sent successfully', index: index, token: token});
+        res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
     }).done();
 
 });
 
 router.route('/otpverify')
 .post(async(req, res) => {
+    console.log("Here");
 
+
+    var contact, name;
+    if(req.headers.authorization){
+        var token = req.headers.authorization;
+        var decodedtoken = await jwt.decode(token, config.secret);
+        contact = decodedtoken.contact;
+        name = decodedtoken.name;
+    } else {
+        res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
+        return;
+    }
+
+    var userOtp = req.body.otp;
+
+    console.log("userOtp -- ", userOtp);
+
+    User.findOne({'contact': contact}, async (err, user) => {
+        if(err)throw err;
+        if(!user || user.contact!==contact){
+            res.send({success: false, msg: 'Enter your Phone number correctly', contact: contact, isregistered: false});
+            return;
+        }
+        console.log("Real otp -- ", user.otp);
+        if(user.otp === ''){
+            res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
+            return;
+        }
+        if(user.otp !== userOtp){
+            res.send({success: false, msg: 'Incorrect Otp', contact: contact, isregistered: false});
+            return;
+        }
+        await User.updateOne({'contact': contact}, { $set: {'otp': ''} });
+        res.send({success: true, msg: 'You are authorized', isregistered: user.registered, contact: contact, name: name});
+    });
+    
 });
+
+router.route('/getinfo')
+.post(async(req, res) => {
+    console.log("getinfo");
+
+    var contact, data;
+    if(req.headers.authorization){
+        var token = req.headers.authorization;
+        data = await jwt.decode(token, config.secret);
+        contact = data.contact;
+    } else {
+        res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
+        return;
+    }
+    console.log("getinfo data -- ", data);
+    res.send({success: true, msg: 'Success', isregistered: true, data: data});
+
+})
 
 
 

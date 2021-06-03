@@ -8,13 +8,13 @@ var functions = {
         var num = Math.floor(Math.random()*(otp.max - otp.min + 1)) + otp.min;
         return num;
     },
-    getinfo: (req, res) => {
-        if(req.headers.authorization && req.headers.authorization.split(' ')[0] === 'bearer'){
-            var token = req.headers.authorization.split(' ')[1];
+    getContact: (req, res) => {
+        if(req.headers.authorization){
+            var token = req.headers.authorization;
             var decodedtoken = jwt.decode(token, config.secret);
-            return res.json({success: true, msg: 'Hello '+decodedtoken.name});
+            return {success: true, contact: decodedtoken.contact};
         } else {
-            return res.json({success: false, msg: 'No Headers'});
+            return {success: false, msg: 'No Headers'};
         }
     }
 }
