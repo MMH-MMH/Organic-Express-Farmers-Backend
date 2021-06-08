@@ -31,6 +31,7 @@ router.route('/')
     var user = await User.findOne({'contact': contact});
 
     if(!user){
+        console.log("He/she is newUser");
         var newUser = new User;
         newUser.contact = contact;
         newUser.name = "abcd";
@@ -57,14 +58,20 @@ router.route('/')
         to: contact,
         body: txt,
         from: otp.from
-    }).then((message) => {
+    }).then(async(message) => {
         if(message.errorMessage){
             res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
             return;
         }
         console.log("after", message);
         var token = jwt.encode(user, config.secret);
-        var decoded = jwt.decode(token, config.secret);
+        try{
+            var decoded = await jwt.decode(token, config.secret);
+        } catch (err){
+            res.send({success: false, msg: 'Some server error occurred! Please retry', index: index, token: null});
+            throw err;
+
+        }
         console.log("decoded token -- ", decoded);
 
         res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
