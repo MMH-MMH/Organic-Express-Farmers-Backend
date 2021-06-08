@@ -64,6 +64,9 @@ router.route('/')
         }
         console.log("after", message);
         var token = jwt.encode(user, config.secret);
+        var decoded = jwt.decode(token, config.secret);
+        console.log("decoded token -- ", decoded);
+
         res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
     }).done();
 
@@ -77,9 +80,12 @@ router.route('/otpverify')
     var contact, name;
     if(req.headers.authorization){
         var token = req.headers.authorization;
+        console.log("token -- ", token);
         var decodedtoken = await jwt.decode(token, config.secret);
+        console.log("decodedtoken -- ", decodedtoken);
         contact = decodedtoken.contact;
         name = decodedtoken.name;
+        console.log("data -- ", decodedtoken);
     } else {
         res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
         return;
@@ -90,42 +96,98 @@ router.route('/otpverify')
     console.log("userOtp -- ", userOtp);
 
     User.findOne({'contact': contact}, async (err, user) => {
+
         if(err)throw err;
+        console.log("user -- ", user);
         if(!user || user.contact!==contact){
             res.send({success: false, msg: 'Enter your Phone number correctly', contact: contact, isregistered: false});
             return;
         }
         console.log("Real otp -- ", user.otp);
-        if(user.otp === ''){
-            res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
-            return;
-        }
+        
         if(user.otp !== userOtp){
             res.send({success: false, msg: 'Incorrect Otp', contact: contact, isregistered: false});
             return;
         }
         await User.updateOne({'contact': contact}, { $set: {'otp': ''} });
-        res.send({success: true, msg: 'You are authorized', isregistered: user.registered, contact: contact, name: name});
+        var msg = "You have to register yourself";
+        if(user.registered){
+            msg = "You are logged in now";
+        }
+        res.send({success: true, msg: msg, isregistered: user.registered, contact: contact, name: name});
     });
     
 });
 
 router.route('/getinfo')
 .post(async(req, res) => {
-    console.log("getinfo");
+    try{
+        console.log("getinfo");
+        console.log(req.body);
+        var contact = req.body.contact;
+        
+        var userData;
 
-    var contact, data;
-    if(req.headers.authorization){
-        var token = req.headers.authorization;
-        data = await jwt.decode(token, config.secret);
-        contact = data.contact;
-    } else {
-        res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
-        return;
+        User.findOne({'contact': contact}).then((err, user) => {
+            if(err) {
+                throw err;
+            }
+            console.log("user -- ", user);
+            userData = user;
+            res.send({success: true, msg: 'Success', data: userData});
+        });
+
+        
+    } catch (err) {
+        res.send({success: false, msg: "We couldn't get your account info. We are trying hard to make everything work fine!", data: {}})
     }
-    console.log("getinfo data -- ", data);
-    res.send({success: true, msg: 'Success', isregistered: true, data: data});
 
+});
+
+router.route('/register')
+.post(async(req, res) => {
+    console.log("Register");
+
+    var userData = req.body.data;
+    
+    // console.log(req.body);
+    // console.log(userData);
+    userData["registered"] = true;
+    var contact = ("+91" + userData["contact"]).toString();
+    userData["contact"] = contact;
+    var cropList = userData["cropsList"].split(',');
+    userData['cropsList'] = cropList;
+    console.log("final userdata -- ", userData);
+
+    await User.updateOne({'contact': userData["contact"]}, { $set: userData}, (err) => {
+        if(err)throw err;
+        console.log("Updated");
+    });
+
+    res.send({"success": true});
+});
+
+router.route('/uploadPic')
+.post(async(req, res) => {
+    console.log('uploadPic');
+    console.log(req.body);
+    var contact = req.body.data.contact;
+    var pic = req.body.data.pic;
+    await User.updateOne({'contact': contact}, {$set: {'profilePic': pic}});
+
+})
+
+router.route('/getPic')
+.post(async(req, res) => {
+    console.log("getPic");
+    console.log(req.body)
+    var contact = req.body.contact;
+    User.findOne({'contact': contact}, (err, user) => {
+        if(err) throw err;
+        console.log(user);
+        res.send({"success": true, "pic": user.profilePic, 'msg': "Success"});
+    });
+    res.send({"success": false, "pic": null, 'msg': "Failure"});
 })
 
 

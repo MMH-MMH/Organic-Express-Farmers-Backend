@@ -7,7 +7,15 @@ var userSchema = new Schema({
     name: String,
     contact: String,
     otp: String,
+    language: String,
     registered: Boolean,
+    costAdd: String,
+    anotherNumber: String,
+    landSize: Number,
+    cropsList: Object,
+    farmingType: Object,
+    certificateNumber: String,
+    profilePic: String,
 });
 
 
