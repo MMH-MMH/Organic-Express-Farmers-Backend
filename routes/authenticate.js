@@ -64,15 +64,17 @@ router.route('/')
             return;
         }
         console.log("after", message);
-        var token = jwt.encode(user, config.secret);
+        var token = jwt.encode(user, config.secret), decoded;
+        console.log("token -- ", token);
         try{
-            var decoded = await jwt.decode(token, config.secret);
+            decoded = await jwt.decode(token, config.secret);
+            
         } catch (err){
-            res.send({success: false, msg: 'Some server error occurred! Please retry', index: index, token: null});
+            res.send({success: false, msg: 'Some server error occurred! Please retry', index: index, token: token});
             throw err;
 
         }
-        console.log("decoded token -- ", decoded);
+        // console.log("decoded token -- ", decoded);
 
         res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
     }).done();
@@ -174,13 +176,41 @@ router.route('/register')
     res.send({"success": true});
 });
 
+const crypto = require('crypto');
+const algorithm = 'aes-256-ctr';
+const secretKey = 'qazxswedcvfrtgbnhyujmkiolp123457';
+const iv = crypto.randomBytes(16);
+
+const encrypt = (text) => {
+
+    const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+
+    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+
+    return {
+        iv: iv.toString('hex'),
+        content: encrypted.toString('hex')
+    };
+};
+
+const decrypt = (hash) => {
+
+    const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
+
+    const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+
+    return decrpyted.toString();
+};
+
 router.route('/uploadPic')
 .post(async(req, res) => {
     console.log('uploadPic');
-    console.log(req.body);
+    console.log("--->", req.body);
     var contact = req.body.data.contact;
     var pic = req.body.data.pic;
-    await User.updateOne({'contact': contact}, {$set: {'profilePic': pic}});
+    var enPic = encrypt(pic);
+    console.log("enPic -- ", enPic);
+    await User.updateOne({'contact': contact}, {$set: {'profilePic': enPic}});
 
 })
 
@@ -192,11 +222,43 @@ router.route('/getPic')
     User.findOne({'contact': contact}, (err, user) => {
         if(err) throw err;
         console.log(user);
-        res.send({"success": true, "pic": user.profilePic, 'msg': "Success"});
+        var dePic = decrypt(user.profilePic);
+        res.send({"success": true, "pic": dePic, 'msg': "Success"});
     });
     res.send({"success": false, "pic": null, 'msg': "Failure"});
 })
 
+router.route('/getDbConfig')
+.post(async(req, res) => {
+    res.send({"url": config.uri, "success": true});
+})
+
+const multer = require('multer');
+
+var storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads');
+    },
+    filename: (req, file, cb) => {
+        cb(null, new Date().toISOString()+file.originalname)
+    }
+});
+
+var upload = multer({ storage: storage })
+
+router.route('/upload', upload.single('myFile'), async(req, res, next) => {
+    const file = req.file
+    if(!file){
+        const error = new Error('Please upload a file')
+        error.httpStatusCode = 400
+        return next("hey error")
+    }
+    const imagepost= new model({
+        image: file.path
+    })
+    const savedimage= await imagepost.save()
+    res.json(savedimage)
+})
 
 
 module.exports = router;
