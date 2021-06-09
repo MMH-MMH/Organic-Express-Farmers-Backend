@@ -15,7 +15,7 @@ var userSchema = new Schema({
     cropsList: Object,
     farmingType: Object,
     certificateNumber: String,
-    profilePic: String,
+    
 });
 
 
