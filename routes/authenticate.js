@@ -190,7 +190,7 @@ router.route('/requestItems')
 .post(async(req, res) => {
     try{
         console.log("requestItems = ", req.body);
-        var contact = req.body.contact, items = req.body.items;
+        var contact = req.body.data.contact, items = req.body.data.items;
         contact = "+91"+contact;
         console.log("contact -- ", contact, "\nitems -- ", items);
         var user = await User.findOne({'contact': contact});
