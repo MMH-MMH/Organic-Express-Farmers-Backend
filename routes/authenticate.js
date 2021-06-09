@@ -55,30 +55,39 @@ router.route('/')
     txt+=(otp_number).toString();
     txt+="\n";
 
-    await client.messages.create({
-        to: contact,
-        body: txt,
-        from: otp.from
-    }).then(async(message) => {
-        if(message.errorMessage){
-            res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
-            return;
-        }
-        console.log("after", message);
-        var token = jwt.encode(user, config.secret), decoded;
-        console.log("token -- ", token);
-        try{
-            decoded = await jwt.decode(token, config.secret);
+    var token = jwt.encode(user, config.secret), decoded;
+    console.log("token -- ", token);
+    try{
+        decoded = await jwt.decode(token, config.secret);
+        
+    } catch (err){
+        res.send({success: false, msg: 'Some server error occurred! Please retry', index: index, token: token});
+        throw err;
+
+    }
+
+    console.log("decoded == ", decoded);
+
+    if(decoded){
+
+        await client.messages.create({
+            to: contact,
+            body: txt,
+            from: otp.from
+        }).then(async(message) => {
+            if(message.errorMessage){
+                res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
+                return;
+            }
+            console.log("after", message);
             
-        } catch (err){
-            res.send({success: false, msg: 'Some server error occurred! Please retry', index: index, token: token});
-            throw err;
+            // console.log("decoded token -- ", decoded);
 
-        }
-        // console.log("decoded token -- ", decoded);
-
-        res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
-    }).done();
+            res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
+        }).done();
+    } else {
+        res.send({success: false, msg: 'Server error, Please retry'});    
+    }
 
 });
 
