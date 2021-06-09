@@ -104,7 +104,6 @@ router.route('/otpverify')
         console.log("decodedtoken -- ", decodedtoken);
         contact = decodedtoken.contact;
         name = decodedtoken.name;
-        console.log("data -- ", decodedtoken);
     } else {
         res.send({success: false, msg: 'Invalid Authorization', contact: contact, isregistered: false});
         return;
@@ -165,25 +164,29 @@ router.route('/getinfo')
 
 router.route('/register')
 .post(async(req, res) => {
-    console.log("Register");
+    try{
+        console.log("Register");
 
-    var userData = req.body.data;
-    
-    // console.log(req.body);
-    // console.log(userData);
-    userData["registered"] = true;
-    var contact = ("+91" + userData["contact"]).toString();
-    userData["contact"] = contact;
-    var cropList = userData["cropsList"].split(',');
-    userData['cropsList'] = cropList;
-    console.log("final userdata -- ", userData);
+        var userData = req.body.data;
+        
+        // console.log(req.body);
+        // console.log(userData);
+        userData["registered"] = true;
+        var contact = ("+91" + userData["contact"]).toString();
+        userData["contact"] = contact;
+        var cropList = userData["cropsList"].split(',');
+        userData['cropsList'] = cropList;
+        console.log("final userdata -- ", userData);
 
-    await User.updateOne({'contact': userData["contact"]}, { $set: userData}, (err) => {
-        if(err)throw err;
-        console.log("Updated");
-    });
+        await User.updateOne({'contact': userData["contact"]}, { $set: userData}, (err) => {
+            if(err)throw err;
+            console.log("Updated");
+        });
 
-    res.send({"success": true});
+        res.send({"success": true});
+    } catch (err){
+        throw err;
+    }
 });
 
 router.route('/requestItems')
