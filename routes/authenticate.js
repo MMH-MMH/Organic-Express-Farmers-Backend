@@ -196,24 +196,29 @@ router.route('/requestItems')
         var user = await User.findOne({'contact': contact});
         console.log("user -- ", user);
 
-        if(user.requests == null)user.requests={};
+        var newrequests = user.requests;
 
-        console.log("initial requests -- ", user.requests);
+        // if(newrequests == null)
+        newrequests={};
+
+        console.log("initial requests -- ", newrequests);
         
-        for(var [key, value] in items){
-            if(user.requests[key] == null){
-                user.requests[key] = 0;
+        Object.keys(items).forEach((key) => {
+            var value = items[key];
+            console.log(key, value);
+            if(newrequests[key] == null){
+                newrequests[key] = 0;
             }
-            user.requests[key]+=Number(value);
-        }
+            newrequests[key]+=Number(value);
+        });
 
-        console.log("final requests -- ", user.requests);
+        console.log("final requests -- ", newrequests);
 
-        User.updateOne({'contact': contact}, { $set: {requests: user.requests} }).then((err) => {
+        User.updateOne({'contact': contact}, { $set: {'requests': newrequests} }, (err) => {
             if(err) throw err;
             console.log("Updates");
             res.send({"success": true, 'msg': "Request sent succesfully"});
-        })
+        });
     } catch (err){
         console.log(err);
     }
