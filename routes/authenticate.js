@@ -198,8 +198,7 @@ router.route('/requestItems')
 
         var newrequests = user.requests;
 
-        // if(newrequests == null)
-        newrequests={};
+        if(newrequests == null)newrequests={};
 
         console.log("initial requests -- ", newrequests);
         
