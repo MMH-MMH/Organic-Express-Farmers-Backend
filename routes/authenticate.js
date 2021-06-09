@@ -186,5 +186,39 @@ router.route('/register')
     res.send({"success": true});
 });
 
+router.route('/requestItems')
+.post(async(req, res) => {
+    try{
+        console.log("requestItems = ", req.body);
+        var contact = req.body.contact, items = req.body.items;
+        contact = "+91"+contact;
+        console.log("contact -- ", contact, "\nitems -- ", items);
+        var user = await User.findOne({'contact': contact});
+        console.log("user -- ", user);
+
+        if(user.requests == null)user.requests={};
+
+        console.log("initial requests -- ", user.requests);
+        
+        for(var [key, value] in items){
+            if(user.requests[key] == null){
+                user.requests[key] = 0;
+            }
+            user.requests[key]+=Number(value);
+        }
+
+        console.log("final requests -- ", user.requests);
+
+        User.updateOne({'contact': contact}, { $set: {requests: user.requests} }).then((err) => {
+            if(err) throw err;
+            console.log("Updates");
+            res.send({"success": true, 'msg': "Request sent succesfully"});
+        })
+    } catch (err){
+        console.log(err);
+    }
+
+})
+
 
 module.exports = router;
