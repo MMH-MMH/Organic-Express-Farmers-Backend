@@ -245,7 +245,7 @@ router.route('/getCropStatus')
 .post(async(req, res) => {
     try{
         console.log("getCropStatus -- ", req.body);
-        var contact = req.body.data.contact;
+        var contact = req.body.contact;
         contact = "+91"+contact;
         console.log("contact -- ", contact);
         var user = await User.findOne({'contact': contact});
