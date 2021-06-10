@@ -232,7 +232,12 @@ router.route('/updateStatus')
     console.log("updateStatus", req.body);
     var contact = "+91"+req.body.contact;
     var cropStatus = req.body.status;
-    User.findOne({'contact': contact}, { $set: {'cropStatus': cropStatus} });
+    console.log("new crop status -- ", cropStatus);
+    await User.findOne({'contact': contact}, { $set: {'cropStatus': cropStatus} }, (err, user) => {
+        if(err) throw err;
+        console.log("final user -- ", user);
+    });
+    
     res.send({"success":true});
 })
 
