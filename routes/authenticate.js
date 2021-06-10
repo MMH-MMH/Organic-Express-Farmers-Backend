@@ -227,5 +227,36 @@ router.route('/requestItems')
 
 })
 
+router.route('/updateStatus')
+.post(async(req, res) => {
+    console.log("updateStatus", req.body);
+    var contact = "+91"+req.body.data.contact;
+    var cropStatus = req.body.data.status;
+    User.findOne({'contact': contact}, { $set: {'cropStatus': cropStatus} });
+    res.send({"success":true});
+})
+
+router.route('/getCropStatus')
+.post(async(req, res) => {
+    try{
+        console.log("getCropStatus -- ", req.body);
+        var contact = req.body.data.contact;
+        contact = "+91"+contact;
+        console.log("contact -- ", contact);
+        var user = await User.findOne({'contact': contact});
+
+        if(!user){
+            res.send({"success": false, 'msg': "User Not found", 'cropStatus': null});
+        } else {
+            console.log("user -- ", user);
+            res.send({"success": true, 'msg': "Success", 'cropStatus': user.cropStatus});
+        }
+            
+    } catch (err) {
+        console.log("getCropStatuserr -- ", err);
+    }
+
+})
+
 
 module.exports = router;

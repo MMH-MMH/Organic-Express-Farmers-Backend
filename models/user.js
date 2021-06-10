@@ -9,13 +9,15 @@ var userSchema = new Schema({
     otp: String,
     language: String,
     registered: Boolean,
-    costAdd: String,
+    currAdd: String,
     anotherNumber: String,
     landSize: Number,
     cropsList: Object,
     farmingType: Object,
     certificateNumber: String,
     requests: Object,
+    cropStatus: Object,
+    landSizeUnit: String,
 });
 
 
