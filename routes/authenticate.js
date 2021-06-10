@@ -230,8 +230,8 @@ router.route('/requestItems')
 router.route('/updateStatus')
 .post(async(req, res) => {
     console.log("updateStatus", req.body);
-    var contact = "+91"+req.body.contact;
-    var cropStatus = req.body.status;
+    var contact = "+91"+req.body.data.contact;
+    var cropStatus = req.body.data.status;
     console.log("new crop status -- ", cropStatus);
     await User.findOne({'contact': contact}, { $set: {'cropStatus': cropStatus} }, (err, user) => {
         if(err) throw err;
@@ -245,7 +245,7 @@ router.route('/getCropStatus')
 .post(async(req, res) => {
     try{
         console.log("getCropStatus -- ", req.body);
-        var contact = req.body.contact;
+        var contact = req.body.data.contact;
         contact = "+91"+contact;
         console.log("contact -- ", contact);
         var user = await User.findOne({'contact': contact});
