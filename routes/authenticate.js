@@ -233,10 +233,10 @@ router.route('/updateStatus')
     var contact = "+91"+req.body.data.contact;
     var cropStatus = req.body.data.status;
     console.log("new crop status -- ", cropStatus);
-    await User.findOne({'contact': contact}, { $set: {'cropStatus': cropStatus} }, (err, user) => {
-        if(err) throw err;
-        console.log("final user -- ", user);
-    });
+    // await User.findOne({'contact': contact}, { $set: {'cropStatus': cropStatus} }, (err, user) => {
+    //     if(err) throw err;
+    //     console.log("final user -- ", user);
+    // });
     
     res.send({"success":true});
 })
