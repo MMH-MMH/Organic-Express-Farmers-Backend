@@ -10,6 +10,7 @@ const Image = require('../models/image');
 const jwt = require('jwt-simple');
 const config = require('../config/dbConfig')
 
+
 router.route('/')
 .post(async (req, res) => {
 
@@ -53,7 +54,7 @@ router.route('/')
     txt+=(otp_number).toString();
     txt+="\n";
 
-    var token = jwt.encode(user, config.secret), decoded;
+    var token = jwt.encode(user, process.env.secret), decoded;
     
     try{
         decoded = await jwt.decode(token, process.env.secret);
@@ -69,7 +70,7 @@ router.route('/')
         await client.messages.create({
             to: contact,
             body: txt,
-            from: process.config.twilio_from
+            from: process.env.twilio_from
         }).then(async(message) => {
             if(message.errorMessage){
                 res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
