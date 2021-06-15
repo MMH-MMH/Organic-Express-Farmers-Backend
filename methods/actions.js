@@ -1,7 +1,7 @@
 var User = require('../models/user');
 var jwt = require('jwt-simple');
 var config = require('../config/dbConfig');
-var otp = require('../config/twilioConfig');
+var otp = require('../config/otp');
 
 var functions = {
     random_otp: () => {

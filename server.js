@@ -1,10 +1,12 @@
 const express = require('express');
 const morgan  = require('morgan');
 const cors = require('cors');
+const dotenv = require('dotenv');
+dotenv.config()
 const connectDB = require('./config/db');
 const passport = require('passport');
 const bodyParser = require('body-parser');
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT;
 
 connectDB();
 
@@ -23,4 +25,4 @@ if(process.env.NODE_ENV === 'development'){
     app.use(morgan('dev'));
 }
 
-app.listen(PORT, console.log("Server Started"));
+app.listen(PORT, console.log("Server Started at", PORT));

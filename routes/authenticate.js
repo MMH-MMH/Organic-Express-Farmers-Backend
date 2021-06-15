@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const twilio = require('twilio');
-const otp = require('../config/twilioConfig');
+const otp = require('../config/otp');
 const { random_otp } = require('../methods/actions');
 require('../methods/actions');
-const client = new twilio(otp.acc_sid, otp.auth_token);
+const client = new twilio(process.env.twilio_acc_sid, process.env.twilio_auth_token);
 const User = require('../models/user');
 const Image = require('../models/image');
 const jwt = require('jwt-simple');
@@ -28,14 +28,12 @@ router.route('/')
 
     contact = ("+91"+contact).toString();
     
-    console.log("post contact -- ", contact);
     var user = await User.findOne({'contact': contact});
 
     if(!user){
         console.log("He/she is newUser");
         var newUser = new User;
         newUser.contact = contact;
-        newUser.name = "abcd";
         newUser.registered = false,
         await newUser.save();
         index = 1;
@@ -56,9 +54,9 @@ router.route('/')
     txt+="\n";
 
     var token = jwt.encode(user, config.secret), decoded;
-    console.log("token -- ", token);
+    
     try{
-        decoded = await jwt.decode(token, config.secret);
+        decoded = await jwt.decode(token, process.env.secret);
         
     } catch (err){
         res.send({success: false, msg: 'Some server error occurred! Please retry', index: index, token: token});
@@ -66,22 +64,17 @@ router.route('/')
 
     }
 
-    console.log("decoded == ", decoded);
-
     if(decoded){
 
         await client.messages.create({
             to: contact,
             body: txt,
-            from: otp.from
+            from: process.config.twilio_from
         }).then(async(message) => {
             if(message.errorMessage){
                 res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
                 return;
             }
-            console.log("after", message);
-            
-            // console.log("decoded token -- ", decoded);
 
             res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
         }).done();
@@ -93,15 +86,13 @@ router.route('/')
 
 router.route('/otpverify')
 .post(async(req, res) => {
-    console.log("Here");
-
 
     var contact, name;
     if(req.headers.authorization){
         var token = req.headers.authorization;
-        console.log("token -- ", token);
+        
         var decodedtoken = await jwt.decode(token, config.secret);
-        console.log("decodedtoken -- ", decodedtoken);
+        
         contact = decodedtoken.contact;
         name = decodedtoken.name;
     } else {
@@ -111,17 +102,14 @@ router.route('/otpverify')
 
     var userOtp = req.body.otp;
 
-    console.log("userOtp -- ", userOtp);
-
     User.findOne({'contact': contact}, async (err, user) => {
 
         if(err)throw err;
-        console.log("user -- ", user);
+        
         if(!user || user.contact!==contact){
             res.send({success: false, msg: 'Enter your Phone number correctly', contact: contact, isregistered: false});
             return;
         }
-        console.log("Real otp -- ", user.otp);
         
         if(user.otp !== userOtp){
             res.send({success: false, msg: 'Incorrect Otp', contact: contact, isregistered: false});
@@ -140,20 +128,21 @@ router.route('/otpverify')
 router.route('/getinfo')
 .post(async(req, res) => {
     try{
-        console.log("getinfo");
+        
         console.log(req.body);
         var contact = req.body.contact;
         
         var userData;
+        
+        contact = "+91"+contact;
 
-        User.findOne({'contact': contact}).then((err, user) => {
-            if(err) {
-                throw err;
-            }
-            console.log("user -- ", user);
-            userData = user;
+        userData = await User.findOne({'contact': contact});
+
+        if(userData){
             res.send({success: true, msg: 'Success', data: userData});
-        });
+        } else {
+            res.send({success: true, msg: 'Some error occurred', data: null});
+        }
 
         
     } catch (err) {
@@ -165,26 +154,33 @@ router.route('/getinfo')
 router.route('/register')
 .post(async(req, res) => {
     try{
-        console.log("Register");
 
         var userData = req.body.data;
-        
-        // console.log(req.body);
-        // console.log(userData);
         userData["registered"] = true;
         var contact = ("+91" + userData["contact"]).toString();
         userData["contact"] = contact;
         var cropList = userData["cropsList"].split(',');
         userData['cropsList'] = cropList;
-        console.log("final userdata -- ", userData);
 
+        var cropStatus = [];
+        for(var i=0;i<cropList.length;i++){
+            var crop = {
+                "name": cropList[i],
+                "Status": 'none'
+            }
+            cropStatus.append(crop);
+        }
+
+        userData['cropStatus'] = cropStatus;
+        
         await User.updateOne({'contact': userData["contact"]}, { $set: userData}, (err) => {
             if(err)throw err;
-            console.log("Updated");
+        
         });
 
         res.send({"success": true});
     } catch (err){
+        res.send({"success": false});
         throw err;
     }
 });
@@ -192,50 +188,45 @@ router.route('/register')
 router.route('/requestItems')
 .post(async(req, res) => {
     try{
-        console.log("requestItems = ", req.body);
+        
         var contact = req.body.data.contact, items = req.body.data.items;
         contact = "+91"+contact;
-        console.log("contact -- ", contact, "\nitems -- ", items);
+        
         var user = await User.findOne({'contact': contact});
-        console.log("user -- ", user);
-
+        
         var newrequests = user.requests;
 
         if(newrequests == null)newrequests={};
 
-        console.log("initial requests -- ", newrequests);
-        
         Object.keys(items).forEach((key) => {
             var value = items[key];
-            console.log(key, value);
+            
             if(newrequests[key] == null){
                 newrequests[key] = 0;
             }
             newrequests[key]+=Number(value);
         });
 
-        console.log("final requests -- ", newrequests);
-
         User.updateOne({'contact': contact}, { $set: {'requests': newrequests} }, (err) => {
             if(err) throw err;
-            console.log("Updates");
+   
             res.send({"success": true, 'msg': "Request sent succesfully"});
         });
     } catch (err){
-        console.log(err);
+        res.send({"success": false, 'msg': "Request sending failed"});
     }
 
 })
 
 router.route('/updateStatus')
 .post(async(req, res) => {
-    console.log("updateStatus", req.body.data.contact);
+    
     var contact = "+91"+req.body.data.contact;
     var cropStatus = req.body.data.cropStatus;
-    console.log("new crop status -- ", contact, cropStatus);
+    
     await User.updateOne({'contact': contact}, { $set: {'cropStatus': cropStatus} }, (err, user) => {
         if(err) throw err;
-        console.log("final user -- ", user);
+    
     });
     
     res.send({"success":true});
@@ -244,21 +235,21 @@ router.route('/updateStatus')
 router.route('/getCropStatus')
 .post(async(req, res) => {
     try{
-        console.log("getCropStatus -- ", req.body);
+        
         var contact = req.body.contact;
         contact = "+91"+contact;
-        console.log("contact -- ", contact);
+        
         var user = await User.findOne({'contact': contact});
 
         if(!user){
             res.send({"success": false, 'msg': "User Not found", 'cropStatus': null});
         } else {
-            console.log("user -- ", user);
+        
             res.send({"success": true, 'msg': "Success", 'cropStatus': user.cropStatus});
         }
             
     } catch (err) {
-        console.log("getCropStatuserr -- ", err);
+        res.send({"success": false, 'msg': "Failed", 'cropStatus': null});
     }
 
 })
