@@ -130,7 +130,7 @@ router.route('/getinfo')
 .post(async(req, res) => {
     try{
         
-        console.log(req.body);
+        console.log("getInfo", req.body);
         var contact = req.body.contact;
         
         var userData;

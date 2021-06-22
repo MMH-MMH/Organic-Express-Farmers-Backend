@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.route('/')
 .get((req, res) => {
-    res.send("Started Organic Express Farmeres Backend");
+    res.render('index.html');
 });
 
 router.route('/dashboard', (req, res) => {
