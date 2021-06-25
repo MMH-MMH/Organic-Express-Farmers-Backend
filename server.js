@@ -7,7 +7,7 @@ const connectDB = require('./config/db');
 const passport = require('passport');
 const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 4000;
-const hostname = process.env.hostname || '127.0.0.1';
+// const hostname = process.env.hostname || '127.0.0.1';
 
 connectDB();
 
@@ -43,7 +43,7 @@ io.on('connection', (userSocket) => {
     });
  });
 
-http.listen(PORT, hostname, console.log("Server Started at", PORT));
+http.listen(PORT, console.log("Server Started at", PORT));
 
 require('dns').lookup(require('os').hostname(), (err, add, fam) => {
     console.log('ip: ' + add);
