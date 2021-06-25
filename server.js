@@ -6,7 +6,7 @@ dotenv.config()
 const connectDB = require('./config/db');
 const passport = require('passport');
 const bodyParser = require('body-parser');
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 4000;
 const hostname = '127.0.0.1';
 
 connectDB();
