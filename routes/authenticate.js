@@ -67,18 +67,18 @@ router.route('/')
     console.log("OTP -- ", otp_number);
     if(decoded){
 
-        // await client.messages.create({
-        //     to: contact,
-        //     body: txt,
-        //     from: process.env.twilio_from
-        // }).then(async(message) => {
-        //     if(message.errorMessage){
-        //         res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
-        //         return;
-        //     }
+        await client.messages.create({
+            to: contact,
+            body: txt,
+            from: process.env.twilio_from
+        }).then(async(message) => {
+            if(message.errorMessage){
+                res.send({success: false, msg: 'Failed sending otp, check the number you entered!'});    
+                return;
+            }
 
             res.send({success: true, msg: 'Otp sent successfully!', index: index, token: token});
-        // }).done();
+        }).done();
     } else {
         res.send({success: false, msg: 'Server error, Please retry'});    
     }
